@@ -1,0 +1,352 @@
+`timescale 1ns / 1ps
+//////////////////////////////////////////////////////////////////////////////////
+// Company: 
+// Engineer: 
+// 
+// Create Date: 12/27/2018 12:53:51 PM
+// Design Name: 
+// Module Name: Master_TB
+// Project Name: 
+// Target Devices: 
+// Tool Versions: 
+// Description: 
+// 
+// Dependencies: 
+// 
+// Revision:
+// Revision 0.01 - File Created
+// Additional Comments:
+// 
+//////////////////////////////////////////////////////////////////////////////////
+
+
+module Master_TB();
+// Users to add ports here
+reg [31:0] in_req_addr;
+reg [31:0] in_req_wdata;
+// User ports ends
+// Do not modify the ports beyond this line
+
+// Initiate AXI transactions
+reg  INIT_AXI_TXN;
+// Asserts when transaction is complete
+wire  TXN_DONE;
+// Asserts when ERROR is detected
+reg  ERROR;
+// Global Clock Signal.
+reg  AXI_ACLK;
+// Global Reset Singal. This Signal is Active Low
+reg  AXI_ARESETN;
+// Master Interface Write Address ID
+wire [0 : 0] AXI_AWID;
+// Master Interface Write Address
+wire [31 : 0] AXI_AWADDR;
+// Burst length. The burst length gives the exact number of transfers in a burst
+wire [7 : 0] AXI_AWLEN;
+// Burst size. This signal indicates the size of each transfer in the burst
+wire [2 : 0] AXI_AWSIZE;
+// Burst type. The burst type and the size information, 
+// determine how the address for each transfer within the burst is calculated.
+wire [1 : 0] AXI_AWBURST;
+// Lock type. Provides additional information about the
+// atomic characteristics of the transfer.
+wire  AXI_AWLOCK;
+// Memory type. This signal indicates how transactions
+// are required to progress through a system.
+wire [3 : 0] AXI_AWCACHE;
+// Protection type. This signal indicates the privilege
+// and security level of the transaction, and whether
+// the transaction is a data access or an instruction access.
+wire [2 : 0] AXI_AWPROT;
+// Quality of Service, QoS identifier sent for each write transaction.
+wire [3 : 0] AXI_AWQOS;
+// Optional User-defined signal in the write address channel.
+wire [-1 : 0] AXI_AWUSER;
+// Write address valid. This signal indicates that
+// the channel is signaling valid write address and control information.
+wire  AXI_AWVALID;
+// Write address ready. This signal indicates that
+// the slave is ready to accept an address and associated control signals
+wire  AXI_AWREADY;
+// Master Interface Write Data.
+wire [31 : 0] AXI_WDATA;
+// Write strobes. This signal indicates which byte
+// lanes hold valid data. There is one write strobe
+// bit for each eight bits of the write data bus.
+wire [3 : 0] AXI_WSTRB;
+// Write last. This signal indicates the last transfer in a write burst.
+wire  AXI_WLAST;
+// Optional User-defined signal in the write data channel.
+wire [-1 : 0] AXI_WUSER;
+// Write valid. This signal indicates that valid write
+// data and strobes are available
+wire  AXI_WVALID;
+// Write ready. This signal indicates that the slave
+// can accept the write data.
+wire  AXI_WREADY;
+// Master Interface Write Response.
+wire [0 : 0] AXI_BID;
+// Write response. This signal indicates the status of the write transaction.
+wire [1 : 0] AXI_BRESP;
+// Optional User-defined signal in the write response channel
+wire [-1 : 0] AXI_BUSER;
+// Write response valid. This signal indicates that the
+// channel is signaling a valid write response.
+wire  AXI_BVALID;
+// Response ready. This signal indicates that the master
+// can accept a write response.
+wire  AXI_BREADY;
+// Master Interface Read Address.
+wire [0 : 0] AXI_ARID;
+// Read address. This signal indicates the initial
+// address of a read burst transaction.
+wire [31 : 0] AXI_ARADDR;
+// Burst length. The burst length gives the exact number of transfers in a burst
+wire [7 : 0] AXI_ARLEN;
+// Burst size. This signal indicates the size of each transfer in the burst
+wire [2 : 0] AXI_ARSIZE;
+// Burst type. The burst type and the size information, 
+// determine how the address for each transfer within the burst is calculated.
+wire [1 : 0] AXI_ARBURST;
+// Lock type. Provides additional information about the
+// atomic characteristics of the transfer.
+wire  AXI_ARLOCK;
+// Memory type. This signal indicates how transactions
+// are required to progress through a system.
+wire [3 : 0] AXI_ARCACHE;
+// Protection type. This signal indicates the privilege
+// and security level of the transaction, and whether
+// the transaction is a data access or an instruction access.
+wire [2 : 0] AXI_ARPROT;
+// Quality of Service, QoS identifier sent for each read transaction
+wire [3 : 0] AXI_ARQOS;
+// Optional User-defined signal in the read address channel.
+wire [-1 : 0] AXI_ARUSER;
+// Write address valid. This signal indicates that
+// the channel is signaling valid read address and control information
+wire  AXI_ARVALID;
+// Read address ready. This signal indicates that
+// the slave is ready to accept an address and associated control signals
+wire  AXI_ARREADY;
+// Read ID tag. This signal is the identification tag
+// for the read data group of signals generated by the slave.
+wire [0 : 0] AXI_RID;
+// Master Read Data
+wire [31 : 0] AXI_RDATA;
+// Read response. This signal indicates the status of the read transfer
+wire [1 : 0] AXI_RRESP;
+// Read last. This signal indicates the last transfer in a read burst
+wire  AXI_RLAST;
+// Optional User-defined signal in the read address channel.
+wire [-1 : 0] AXI_RUSER;
+// Read valid. This signal indicates that the channel
+// is signaling the required read data.
+wire  AXI_RVALID;
+// Read ready. This signal indicates that the master can
+// accept the read data and response information.
+wire  AXI_RREADY;
+
+
+parameter integer C_S_AXI_DATA_WIDTH	= 32;
+parameter integer C_S_AXI_ADDR_WIDTH    = 32;
+parameter  C_M_TARGET_SLAVE_BASE_ADDR    = 32'h00000000;
+parameter integer C_M_AXI_BURST_LEN    = 16;
+parameter integer C_M_AXI_ID_WIDTH    = 1;
+parameter integer C_M_AXI_ADDR_WIDTH    = 32;
+parameter integer C_M_AXI_DATA_WIDTH    = 32;
+parameter integer C_M_AXI_AWUSER_WIDTH    = 0;
+parameter integer C_M_AXI_ARUSER_WIDTH    = 0;
+parameter integer C_M_AXI_WUSER_WIDTH    = 0;
+parameter integer C_M_AXI_RUSER_WIDTH    = 0;
+parameter integer C_M_AXI_BUSER_WIDTH    = 0;
+
+parameter  C_M_AXI_START_DATA_VALUE	= 32'h00000000;
+parameter  C_M_AXI_TARGET_SLAVE_BASE_ADDR	= 32'h00000000;
+parameter integer C_M_AXI_TRANSACTIONS_NUM	= 4;
+
+localparam REG_XMIN 	= 0;	//0x00
+localparam REG_YMIN 	= 1;	//0x04
+localparam REG_XMAX 	= 2;	//0x08
+localparam REG_YMAX 	= 3;	//0x0c
+localparam REG_XSTEP 	= 4;	//0x10
+localparam REG_YSTEP 	= 5;	//0x14
+localparam REG_PERIOD 	= 6;	//0x18
+localparam REG_DELAY 	= 7;	//0x1c
+localparam REG_ENABLE	= 8;	//0x20
+localparam REG_SYS_EN	= 9;	//0x20
+localparam REG_BASE_ADDRESS = 10;	//0x24
+localparam REG_FRAME_Y_SIZE = 11;	//0x28
+
+
+//    Master #(
+//                .C_M_TARGET_SLAVE_BASE_ADDR(C_M_TARGET_SLAVE_BASE_ADDR),
+//                .C_M_AXI_BURST_LEN(C_M_AXI_BURST_LEN), 
+//                .C_M_AXI_ID_WIDTH(C_M_AXI_ID_WIDTH),
+//                .C_M_AXI_ADDR_WIDTH(C_M_AXI_ADDR_WIDTH),
+//                .C_M_AXI_DATA_WIDTH(C_M_AXI_DATA_WIDTH),
+//                .C_M_AXI_AWUSER_WIDTH(C_M_AXI_AWUSER_WIDTH),
+//                .C_M_AXI_ARUSER_WIDTH(C_M_AXI_ARUSER_WIDTH),
+//                .C_M_AXI_WUSER_WIDTH(C_M_AXI_WUSER_WIDTH),
+//                .C_M_AXI_RUSER_WIDTH(C_M_AXI_RUSER_WIDTH),
+//                .C_M_AXI_BUSER_WIDTH(C_M_AXI_BUSER_WIDTH))
+//    Master_trans(
+//	    .in_req_addr(in_req_addr),
+//        .in_req_wdata(in_req_wdata),
+//        .INIT_AXI_TXN(INIT_AXI_TXN),
+//        .TXN_DONE(TXN_DONE),
+//        .ERROR(),
+//        .M_AXI_ACLK(AXI_ACLK),
+//        .M_AXI_ARESETN(AXI_ARESETN),
+//        .M_AXI_AWID(AXI_AWID),
+//        .M_AXI_AWADDR(AXI_AWADDR),
+//        .M_AXI_AWLEN(AXI_AWLEN),
+//        .M_AXI_AWSIZE(AXI_AWSIZE),
+//        .M_AXI_AWBURST(AXI_AWBURST),
+//        .M_AXI_AWLOCK(AXI_AWLOCK),
+//        .M_AXI_AWCACHE(AXI_AWCACHE),
+//        .M_AXI_AWPROT(AXI_AWPROT),
+//        .M_AXI_AWQOS(AXI_AWQOS),
+//        .M_AXI_AWUSER(AXI_AWUSER),
+//        .M_AXI_AWVALID(AXI_AWVALID),
+//        .M_AXI_AWREADY(AXI_AWREADY),
+//        .M_AXI_WDATA(AXI_WDATA),
+//        .M_AXI_WSTRB(AXI_WSTRB),
+//        .M_AXI_WLAST(AXI_WLAST),
+//        .M_AXI_WUSER(AXI_WUSER),
+//        .M_AXI_WVALID(AXI_WVALID),
+//        .M_AXI_WREADY(AXI_WREADY),
+//        .M_AXI_BID(AXI_BID),
+//        .M_AXI_BRESP(AXI_BRESP),
+//        .M_AXI_BUSER(AXI_BUSER),
+//        .M_AXI_BVALID(AXI_BVALID),
+//        .M_AXI_BREADY(AXI_BREADY),
+//        .M_AXI_ARID(AXI_ARID),
+//        .M_AXI_ARADDR(AXI_ARADDR),
+//        .M_AXI_ARLEN(AXI_ARLEN),
+//        .M_AXI_ARSIZE(AXI_ARSIZE),
+//        .M_AXI_ARBURST(AXI_ARBURST),
+//        .M_AXI_ARLOCK(AXI_ARLOCK),
+//        .M_AXI_ARCACHE(AXI_ARCACHE),
+//        .M_AXI_ARPROT(AXI_ARPROT),
+//        .M_AXI_ARQOS(AXI_ARQOS),
+//        .M_AXI_ARUSER(AXI_ARUSER),
+//        .M_AXI_ARVALID(AXI_ARVALID),
+//        .M_AXI_ARREADY(AXI_ARREADY),
+//        .M_AXI_RID(AXI_RID),
+//        .M_AXI_RDATA(AXI_RDATA),
+//        .M_AXI_RRESP(AXI_RRESP),
+//        .M_AXI_RLAST(AXI_RLAST),
+//        .M_AXI_RUSER(AXI_RUSER),
+//        .M_AXI_RVALID(AXI_RVALID),
+//        .M_AXI_RREADY(AXI_RREADY));
+    Master_Lite # ( 
+    .C_M_START_DATA_VALUE(C_M_AXI_START_DATA_VALUE),
+    .C_M_TARGET_SLAVE_BASE_ADDR(C_M_AXI_TARGET_SLAVE_BASE_ADDR),
+    .C_M_AXI_ADDR_WIDTH(C_M_AXI_ADDR_WIDTH),
+    .C_M_AXI_DATA_WIDTH(C_M_AXI_DATA_WIDTH),
+    .C_M_TRANSACTIONS_NUM(C_M_AXI_TRANSACTIONS_NUM)
+)   
+    ML (
+    .in_req_wdata(in_req_wdata),
+    .in_req_addr(in_req_addr),
+    .INIT_AXI_TXN(INIT_AXI_TXN),
+    .ERROR(),
+    .TXN_DONE(TXN_DONE),
+    .M_AXI_ACLK(AXI_ACLK),
+    .M_AXI_ARESETN(AXI_ARESETN),
+    .M_AXI_AWADDR(AXI_AWADDR),
+    .M_AXI_AWPROT(AXI_AWPROT),
+    .M_AXI_AWVALID(AXI_AWVALID),
+    .M_AXI_AWREADY(AXI_AWREADY),
+    .M_AXI_WDATA(AXI_WDATA),
+    .M_AXI_WSTRB(AXI_WSTRB),
+    .M_AXI_WVALID(AXI_WVALID),
+    .M_AXI_WREADY(AXI_WREADY),
+    .M_AXI_BRESP(AXI_BRESP),
+    .M_AXI_BVALID(AXI_BVALID),
+    .M_AXI_BREADY(AXI_BREADY),
+    .M_AXI_ARADDR(AXI_ARADDR),
+    .M_AXI_ARPROT(AXI_ARPROT),
+    .M_AXI_ARVALID(AXI_ARVALID),
+    .M_AXI_ARREADY(AXI_ARREADY),
+    .M_AXI_RDATA(AXI_RDATA),
+    .M_AXI_RRESP(AXI_RRESP),
+    .M_AXI_RVALID(AXI_RVALID),
+    .M_AXI_RREADY(AXI_RREADY)
+);
+    
+ 	Slave # ( 
+            .C_S_AXI_DATA_WIDTH(C_S_AXI_DATA_WIDTH),
+            .C_S_AXI_ADDR_WIDTH(C_S_AXI_ADDR_WIDTH)
+        ) Slv (
+            .S_AXI_ACLK(AXI_ACLK),
+            .S_AXI_ARESETN(AXI_ARESETN),
+            .S_AXI_AWADDR(AXI_AWADDR),
+            .S_AXI_AWPROT(AXI_AWPROT),
+            .S_AXI_AWVALID(AXI_AWVALID),
+            .S_AXI_AWREADY(AXI_AWREADY),
+            .S_AXI_WDATA(AXI_WDATA),
+            .S_AXI_WSTRB(AXI_WSTRB),
+            .S_AXI_WVALID(AXI_WVALID),
+            .S_AXI_WREADY(AXI_WREADY),
+            .S_AXI_BRESP(AXI_BRESP),
+            .S_AXI_BVALID(AXI_BVALID),
+            .S_AXI_BREADY(AXI_BREADY),
+            .S_AXI_ARADDR(AXI_ARADDR),
+            .S_AXI_ARPROT(AXI_ARPROT),
+            .S_AXI_ARVALID(AXI_ARVALID),
+            .S_AXI_ARREADY(AXI_ARREADY),
+            .S_AXI_RDATA(AXI_RDATA),
+            .S_AXI_RRESP(AXI_RRESP),
+            .S_AXI_RVALID(AXI_RVALID),
+            .S_AXI_RREADY(AXI_RREADY)
+        );
+        
+       initial begin
+        AXI_ACLK = 0;
+        AXI_ARESETN = 0;
+        INIT_AXI_TXN = 0;
+        //axi_rdata = 32'b0;
+        //axi_rresp = 0;
+        //M_AXI_BRESP = 0;
+        //CLK = 0;
+        #400;
+        AXI_ARESETN = 1;
+        //INIT_AXI_TXN = 0;
+        #1600 cpu_write(REG_XMIN        << 2, 1);
+        #1600 cpu_write(REG_YMIN        << 2, 2);
+        #1600 cpu_write(REG_XMAX        << 2, 3);
+        #1600 cpu_write(REG_YMAX        << 2, 4);
+        #1600 cpu_write(REG_XSTEP    << 2, 5);
+        #1600 cpu_write(REG_YSTEP    << 2, 6);
+        #1600 cpu_write(REG_PERIOD    << 2, 7);
+        #1600 cpu_write(REG_DELAY    << 2, 8);
+        #1600 cpu_write(REG_DELAY    << 2, 9);
+        #1600 cpu_write(REG_BASE_ADDRESS    << 2, 32'hf0000000);
+        #1600 cpu_write(REG_FRAME_Y_SIZE    << 2, 10);
+        #1600 cpu_write(REG_ENABLE    << 2, 32'd1);        
+                
+    end
+    //always #10 CLK  = ~CLK;    
+    always #10 AXI_ACLK = !AXI_ACLK;
+            // CU Write Task
+        task cpu_write;
+          input [31:0]  address;
+          input [31:0] data;
+          begin
+            $display ("%g CPU Write task with address : %h Data : %h", 
+              $time, address,data);
+            $display ("%g  -> Driving CE, WR, WR data and ADDRESS on to bus", 
+              $time);
+            @ (posedge AXI_ACLK);
+            in_req_addr = address;
+            in_req_wdata = data;
+            INIT_AXI_TXN = 1;
+            @ (posedge AXI_ACLK);
+            //in_req_addr = 0;
+            INIT_AXI_TXN = 0;
+            
+            $display ("======================");
+          end
+        endtask
+endmodule
